@@ -1,4 +1,4 @@
-use std::io;
+use std::io::Result;
 
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers, read};
 
@@ -13,13 +13,13 @@ impl Editor {
     pub const fn default() -> Self {
         Self { should_quit: false }
     }
-    pub fn run(&mut self) -> io::Result<()> {
+    pub fn run(&mut self) -> Result<()> {
         Terminal::initialize()?;
         let result = self.repl();
         Terminal::terminate()?;
         result
     }
-    pub fn repl(&mut self) -> io::Result<()> {
+    pub fn repl(&mut self) -> Result<()> {
         while !self.should_quit {
             self.refresh_screen()?;
 
@@ -29,7 +29,7 @@ impl Editor {
 
         Ok(())
     }
-    fn refresh_screen(&mut self) -> io::Result<()> {
+    fn refresh_screen(&mut self) -> Result<()> {
         Terminal::hide_cursor()?;
         if self.should_quit {
             Terminal::clear_screen()?;
@@ -55,7 +55,7 @@ impl Editor {
             }
         }
     }
-    fn draw_rows() -> io::Result<()> {
+    fn draw_rows() -> Result<()> {
         let Size { height, .. } = Terminal::size()?;
         for i in 0..height {
             Terminal::clear_line()?;
