@@ -3,14 +3,12 @@ use std::io::Result;
 use core::cmp::min;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, read};
 
-mod terminal;
 use terminal::{Position, Size, Terminal};
+use view::View;
 
-const NAME: &str = env!("CARGO_PKG_NAME");
-const VERSION: &str = env!("CARGO_PKG_VERSION");
-
-const MIN_HEIGHT: usize = 0;
-const MIN_WIDTH: usize = 2;
+mod buffer;
+mod terminal;
+mod view;
 
 #[derive(Debug, Clone, Copy, Default)]
 struct Location {
@@ -22,14 +20,15 @@ struct Location {
 pub struct Editor {
     should_quit: bool,
     location: Location,
+    view: View,
 }
 
 impl Editor {
     pub fn run(&mut self) -> Result<()> {
         Terminal::initialize()?;
 
-        Terminal::move_caret_to(Position::default())?;
-        Self::draw_rows()?;
+        self.view.buffer.add_line(String::from("Hello World!"));
+        self.view.render()?;
 
         let result = self.repl();
         Terminal::terminate()?;
@@ -118,29 +117,6 @@ impl Editor {
             _ => (),
         }
         self.location = Location { x, y };
-        Ok(())
-    }
-    fn draw_rows() -> Result<()> {
-        let Size { height, .. } = Terminal::size()?;
-        for i in 0..height {
-            Terminal::clear_line()?;
-            Terminal::print("~")?;
-            if i == height / 3 {
-                Self::welcome_screen()?;
-            }
-            if i + 1 < height {
-                Terminal::print("\n\r")?;
-            }
-        }
-        Ok(())
-    }
-    fn welcome_screen() -> Result<()> {
-        let Size { width, .. } = Terminal::size()?;
-        let msg = format!("{NAME} - {VERSION}");
-        let msg_len = msg.len();
-        let x = width.saturating_sub(msg_len) / 2;
-        Terminal::move_caret_to_column(x)?;
-        Terminal::print(&msg)?;
         Ok(())
     }
 }

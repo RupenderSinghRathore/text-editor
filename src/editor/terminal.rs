@@ -1,15 +1,12 @@
-use std::{
-    fmt::Display,
-    io::{Result, Write, stdout},
-};
+use std::io::{Result, Write, stdout};
 
 use crossterm::{
     Command, cursor, queue,
     style::Print,
-    terminal::{Clear, ClearType, disable_raw_mode, enable_raw_mode, size},
+    terminal::{self, Clear, ClearType, disable_raw_mode, enable_raw_mode, size},
 };
 
-pub struct Terminal {}
+pub struct Terminal;
 
 #[derive(Copy, Clone)]
 pub struct Size {
@@ -25,15 +22,16 @@ pub struct Position {
 
 impl Terminal {
     pub fn terminate() -> Result<()> {
+        Self::leave_alt_screen()?;
         disable_raw_mode()?;
         Ok(())
     }
     pub fn initialize() -> Result<()> {
         enable_raw_mode()?;
-        Self::clear_screen()?;
+        Self::enter_alt_screen()?;
         Ok(())
     }
-    pub fn print<T: Display>(s: T) -> Result<()> {
+    pub fn print(s: &str) -> Result<()> {
         Self::queue_command(Print(s))
     }
     pub fn queue_command<T: Command>(cmd: T) -> Result<()> {
@@ -60,16 +58,22 @@ impl Terminal {
         let (width, height) = (width_u16 as usize, height_u16 as usize);
         Ok(Size { width, height })
     }
-    pub fn move_caret_to(p: Position) -> Result<()> {
-        Self::queue_command(cursor::MoveTo(Self::as_u16(p.col), Self::as_u16(p.row)))
-    }
-    pub fn move_caret_to_row(y: usize) -> Result<()> {
-        Self::queue_command(cursor::MoveToRow(Self::as_u16(y)))
-    }
     fn as_u16(a: usize) -> u16 {
         u16::try_from(a).unwrap()
     }
     pub fn move_caret_to_column(x: usize) -> Result<()> {
         Self::queue_command(cursor::MoveToColumn(Self::as_u16(x)))
+    }
+    pub fn move_caret_to(p: Position) -> Result<()> {
+        Self::queue_command(cursor::MoveTo(Self::as_u16(p.col), Self::as_u16(p.row)))
+    }
+    // pub fn move_caret_to_row(y: usize) -> Result<()> {
+    //     Self::queue_command(cursor::MoveToRow(Self::as_u16(y)))
+    // }
+    pub fn enter_alt_screen() -> Result<()> {
+        Self::queue_command(terminal::EnterAlternateScreen)
+    }
+    pub fn leave_alt_screen() -> Result<()> {
+        Self::queue_command(terminal::LeaveAlternateScreen)
     }
 }
