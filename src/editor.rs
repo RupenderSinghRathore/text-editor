@@ -1,4 +1,4 @@
-use std::io::Result;
+use std::{env, io::Result};
 
 use core::cmp::min;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, read};
@@ -26,13 +26,17 @@ pub struct Editor {
 impl Editor {
     pub fn run(&mut self) -> Result<()> {
         Terminal::initialize()?;
-
-        self.view.buffer.add_line(String::from("Hello World!"));
+        self.handle_args();
         self.view.render()?;
-
         let result = self.repl();
         Terminal::terminate()?;
         result
+    }
+    fn handle_args(&mut self) {
+        let args: Vec<String> = env::args().collect();
+        if let Some(arg) = args.get(1) {
+            self.view.load(arg);
+        }
     }
     pub fn repl(&mut self) -> Result<()> {
         while !self.should_quit {

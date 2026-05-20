@@ -15,22 +15,22 @@ pub struct View {
 
 impl View {
     pub fn render(&self) -> Result<()> {
-        let Size { height, .. } = Terminal::size()?;
-
-        let rendered_rows = self.buffer.len().min(height);
-
-        for v in self.buffer.lines().iter().take(height) {
-            Terminal::clear_line()?;
-            Terminal::print(v)?;
-            Terminal::print("\r\n")?;
+        if self.buffer.is_empty() {
+            Self::render_welcome_screen()
+        } else {
+            self.render_buffer()
         }
-
-        for i in rendered_rows..height {
+    }
+    fn render_buffer(&self) -> Result<()> {
+        let Size { height, .. } = Terminal::size()?;
+        let lines = self.buffer.lines();
+        for i in 0..height {
             Terminal::clear_line()?;
-            Terminal::print("~")?;
 
-            if i == height / 3 {
-                Self::welcome_screen()?;
+            if let Some(line) = lines.get(i) {
+                Terminal::print(line)?;
+            } else {
+                Self::blank_line()?;
             }
 
             if i + 1 < height {
@@ -38,6 +38,26 @@ impl View {
             }
         }
         Ok(())
+    }
+    fn render_welcome_screen() -> Result<()> {
+        let Size { height, .. } = Terminal::size()?;
+        for i in 0..height {
+            Terminal::clear_line()?;
+
+            if i == height / 3 {
+                Self::welcome_screen()?;
+            } else {
+                Self::blank_line()?;
+            }
+
+            if i + 1 < height {
+                Terminal::print("\r\n")?;
+            }
+        }
+        Ok(())
+    }
+    fn blank_line() -> Result<()> {
+        Terminal::print("~")
     }
     fn welcome_screen() -> Result<()> {
         let Size { width, .. } = Terminal::size()?;
@@ -47,5 +67,10 @@ impl View {
         Terminal::move_caret_to_column(x)?;
         Terminal::print(&msg)?;
         Ok(())
+    }
+    pub fn load(&mut self, file: &str) {
+        if let Ok(buf) = Buffer::load(file) {
+            self.buffer = buf;
+        }
     }
 }
