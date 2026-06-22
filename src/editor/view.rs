@@ -1,9 +1,9 @@
-use crate::editor::{
-    buffer::Buffer,
-    terminal::{Size, Terminal},
-};
+use crate::editor::terminal::{Size, Terminal};
+use buffer::Buffer;
 
 use std::io::Result;
+
+mod buffer;
 
 const NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");

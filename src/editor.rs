@@ -6,7 +6,6 @@ use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, rea
 use terminal::{Position, Size, Terminal};
 use view::View;
 
-mod buffer;
 mod terminal;
 mod view;
 
