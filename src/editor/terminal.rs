@@ -8,7 +8,7 @@ use crossterm::{
 
 pub struct Terminal;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct Size {
     pub width: usize,
     pub height: usize,
@@ -66,6 +66,13 @@ impl Terminal {
     }
     pub fn move_caret_to(p: Position) -> Result<()> {
         Self::queue_command(cursor::MoveTo(Self::as_u16(p.col), Self::as_u16(p.row)))
+    }
+    pub fn current_caret_position() -> Result<Position> {
+        let (col, row) = cursor::position()?;
+        Ok(Position {
+            col: col as usize,
+            row: row as usize,
+        })
     }
     // pub fn move_caret_to_row(y: usize) -> Result<()> {
     //     Self::queue_command(cursor::MoveToRow(Self::as_u16(y)))

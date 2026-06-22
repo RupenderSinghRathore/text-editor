@@ -26,7 +26,8 @@ impl Editor {
     pub fn run(&mut self) -> Result<()> {
         Terminal::initialize()?;
         self.handle_args();
-        self.view.render()?;
+        // self.view.render()?;
+        self.view.needs_redraw();
         let result = self.repl();
         Terminal::terminate()?;
         result
@@ -47,22 +48,8 @@ impl Editor {
 
         Ok(())
     }
-    fn refresh_screen(&mut self) -> Result<()> {
-        Terminal::hide_caret()?;
-        if self.should_quit {
-            Terminal::clear_screen()?;
-            Terminal::print("Goodbye. \r")?;
-        } else {
-            Terminal::move_caret_to(Position {
-                col: self.location.x,
-                row: self.location.y,
-            })?;
-        }
-        Terminal::show_caret()?;
-        Terminal::execute()?;
-        Ok(())
-    }
     fn eval_event(&mut self, event: &Event) -> Result<()> {
+        // TODO: Implement Resize event handling
         if let Event::Key(KeyEvent {
             code,
             modifiers,
@@ -87,6 +74,22 @@ impl Editor {
                 _ => (),
             }
         }
+        Ok(())
+    }
+    fn refresh_screen(&mut self) -> Result<()> {
+        Terminal::hide_caret()?;
+        if self.should_quit {
+            Terminal::clear_screen()?;
+            Terminal::print("Goodbye. \r")?;
+        } else {
+            self.view.render()?;
+            Terminal::move_caret_to(Position {
+                col: self.location.x,
+                row: self.location.y,
+            })?;
+        }
+        Terminal::show_caret()?;
+        Terminal::execute()?;
         Ok(())
     }
     fn move_caret(&mut self, code: KeyCode) -> Result<()> {

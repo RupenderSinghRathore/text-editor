@@ -1,4 +1,4 @@
-use crate::editor::terminal::{Size, Terminal};
+use crate::editor::terminal::{Position, Size, Terminal};
 use buffer::Buffer;
 
 use std::io::Result;
@@ -8,69 +8,64 @@ mod buffer;
 const NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-#[derive(Default)]
 pub struct View {
     pub buffer: Buffer,
+    needs_redraw: bool,
+    size: Size,
 }
 
 impl View {
-    pub fn render(&self) -> Result<()> {
-        if self.buffer.is_empty() {
-            Self::render_welcome_screen()
-        } else {
-            self.render_buffer()
-        }
+    fn render_line(at: usize, line_text: &str) -> Result<()> {
+        Terminal::move_caret_to(Position { col: 0, row: at })?;
+        Terminal::clear_line()?;
+        Terminal::print(line_text)?;
+        Ok(())
     }
-    fn render_buffer(&self) -> Result<()> {
-        let Size { height, .. } = Terminal::size()?;
+    pub fn render(&mut self) -> Result<()> {
+        if !self.needs_redraw {
+            return Ok(());
+        }
+        let Size { height, width } = self.size;
+        if height == 0 || width == 0 {
+            return Ok(());
+        }
+
         let lines = self.buffer.lines();
         for i in 0..height {
-            Terminal::clear_line()?;
-
             if let Some(line) = lines.get(i) {
-                Terminal::print(line)?;
+                Self::render_line(i, line)?;
+            } else if self.buffer.is_empty() && i == height / 3 {
+                Self::render_line(i, &Self::welcome_screen_msg(width))?;
             } else {
-                Self::blank_line()?;
-            }
-
-            if i + 1 < height {
-                Terminal::print("\r\n")?;
+                Self::render_line(i, "~")?;
             }
         }
+
+        self.needs_redraw = false;
+
         Ok(())
     }
-    fn render_welcome_screen() -> Result<()> {
-        let Size { height, .. } = Terminal::size()?;
-        for i in 0..height {
-            Terminal::clear_line()?;
-
-            if i == height / 3 {
-                Self::welcome_screen()?;
-            } else {
-                Self::blank_line()?;
-            }
-
-            if i + 1 < height {
-                Terminal::print("\r\n")?;
-            }
-        }
-        Ok(())
+    pub fn needs_redraw(&mut self) {
+        self.needs_redraw = true;
     }
-    fn blank_line() -> Result<()> {
-        Terminal::print("~")
-    }
-    fn welcome_screen() -> Result<()> {
-        let Size { width, .. } = Terminal::size()?;
+    fn welcome_screen_msg(width: usize) -> String {
         let msg = format!("{NAME} - {VERSION}");
-        let msg_len = msg.len();
-        let x = width.saturating_sub(msg_len) / 2;
-        Terminal::move_caret_to_column(x)?;
-        Terminal::print(&msg)?;
-        Ok(())
+        let spaces_needed = " ".repeat((width - msg.len()) / 2);
+        spaces_needed + &msg
     }
     pub fn load(&mut self, file: &str) {
         if let Ok(buf) = Buffer::load(file) {
             self.buffer = buf;
+        }
+    }
+}
+
+impl Default for View {
+    fn default() -> Self {
+        View {
+            buffer: Buffer::default(),
+            needs_redraw: true,
+            size: Terminal::size().unwrap_or_default(),
         }
     }
 }
