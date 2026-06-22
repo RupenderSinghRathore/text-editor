@@ -21,14 +21,25 @@ terminate() - exit alt screen and restore cooked mode
 ```
 src
 ├── editor
-│   ├── buffer.rs
 │   ├── terminal.rs
+│   ├── view
+│   │   └── buffer.rs
 │   └── view.rs
 ├── editor.rs
 └── main.rs
 ```
-- main.rs is just startup glue.
-- editor.rs owns the app loop and input handling.
-- terminal.rs wraps crossterm.
-- buffer.rs holds file contents.
-- view.rs renders the screen.
+
+**Graph of crates**
+
+```tree
+editor
+├── terminal
+└── view
+    └── buffer
+```
+
+- **main.rs** is just startup glue.
+- **editor.rs** owns the app loop and input handling.
+- **terminal.rs** wraps crossterm.
+- **view.rs** renders the screen.
+- **buffer.rs** holds file contents.
