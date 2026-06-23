@@ -26,8 +26,6 @@ impl Editor {
     pub fn run(&mut self) -> Result<()> {
         Terminal::initialize()?;
         self.handle_args();
-        // self.view.render()?;
-        self.view.needs_redraw();
         let result = self.repl();
         Terminal::terminate()?;
         result
@@ -50,14 +48,13 @@ impl Editor {
     }
     fn eval_event(&mut self, event: &Event) -> Result<()> {
         // TODO: Implement Resize event handling
-        if let Event::Key(KeyEvent {
-            code,
-            modifiers,
-            kind: KeyEventKind::Press,
-            ..
-        }) = event
-        {
-            match code {
+        match event {
+            Event::Key(KeyEvent {
+                code,
+                modifiers,
+                kind: KeyEventKind::Press,
+                ..
+            }) => match code {
                 KeyCode::Char('q') if *modifiers == KeyModifiers::CONTROL => {
                     self.should_quit = true;
                 }
@@ -72,7 +69,14 @@ impl Editor {
                     self.move_caret(*code)?;
                 }
                 _ => (),
+            },
+
+            Event::Resize(col, row) => {
+                let width = *col as usize;
+                let height = *row as usize;
+                self.view.resize(Size { width, height });
             }
+            _ => (),
         }
         Ok(())
     }

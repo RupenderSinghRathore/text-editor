@@ -45,13 +45,14 @@ impl View {
 
         Ok(())
     }
-    pub fn needs_redraw(&mut self) {
-        self.needs_redraw = true;
-    }
     fn welcome_screen_msg(width: usize) -> String {
         let msg = format!("{NAME} - {VERSION}");
         let spaces_needed = " ".repeat((width - msg.len()) / 2);
         spaces_needed + &msg
+    }
+    pub fn resize(&mut self, size: Size) {
+        self.size = size;
+        self.needs_redraw = true;
     }
     pub fn load(&mut self, file: &str) {
         if let Ok(buf) = Buffer::load(file) {
