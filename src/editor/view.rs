@@ -8,6 +8,7 @@ mod buffer;
 const NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+#[derive(Default)]
 pub struct View {
     pub buffer: Buffer,
     needs_redraw: bool,
@@ -15,6 +16,13 @@ pub struct View {
 }
 
 impl View {
+    pub fn new() -> Self {
+        View {
+            buffer: Buffer::default(),
+            needs_redraw: true,
+            size: Terminal::size().unwrap_or_default(),
+        }
+    }
     fn render_line(at: usize, line_text: &str) -> Result<()> {
         Terminal::move_caret_to(Position { col: 0, row: at })?;
         Terminal::clear_line()?;
@@ -57,16 +65,6 @@ impl View {
     pub fn load(&mut self, file: &str) {
         if let Ok(buf) = Buffer::load(file) {
             self.buffer = buf;
-        }
-    }
-}
-
-impl Default for View {
-    fn default() -> Self {
-        View {
-            buffer: Buffer::default(),
-            needs_redraw: true,
-            size: Terminal::size().unwrap_or_default(),
         }
     }
 }

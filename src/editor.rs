@@ -1,4 +1,4 @@
-use std::{env, io::Result};
+use std::{backtrace, env, io::Result};
 
 use core::cmp::min;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, read};
@@ -23,20 +23,24 @@ pub struct Editor {
 }
 
 impl Editor {
-    pub fn run(&mut self) -> Result<()> {
+    pub fn new() -> Result<Self> {
+        std::panic::set_hook(Box::new(move |_| {
+            Terminal::terminate().unwrap();
+            let backtrace = backtrace::Backtrace::capture();
+            std::fs::write("panic_backtrace.txt", format!("{backtrace}\n")).unwrap();
+        }));
         Terminal::initialize()?;
-        self.handle_args();
-        let result = self.repl();
-        Terminal::terminate()?;
-        result
+        Ok(Self {
+            should_quit: false,
+            location: Location::default(),
+            view: View::new(),
+        })
     }
-    fn handle_args(&mut self) {
+    pub fn run(&mut self) -> Result<()> {
         let args: Vec<String> = env::args().collect();
         if let Some(arg) = args.get(1) {
             self.view.load(arg);
         }
-    }
-    pub fn repl(&mut self) -> Result<()> {
         while !self.should_quit {
             self.refresh_screen()?;
 
@@ -82,16 +86,11 @@ impl Editor {
     }
     fn refresh_screen(&mut self) -> Result<()> {
         Terminal::hide_caret()?;
-        if self.should_quit {
-            Terminal::clear_screen()?;
-            Terminal::print("Goodbye. \r")?;
-        } else {
-            self.view.render()?;
-            Terminal::move_caret_to(Position {
-                col: self.location.x,
-                row: self.location.y,
-            })?;
-        }
+        self.view.render()?;
+        Terminal::move_caret_to(Position {
+            col: self.location.x,
+            row: self.location.y,
+        })?;
         Terminal::show_caret()?;
         Terminal::execute()?;
         Ok(())
@@ -128,5 +127,14 @@ impl Editor {
         }
         self.location = Location { x, y };
         Ok(())
+    }
+}
+
+impl Drop for Editor {
+    fn drop(&mut self) {
+        _ = Terminal::terminate();
+        if self.should_quit {
+            let _ = Terminal::print("goodbye..");
+        }
     }
 }

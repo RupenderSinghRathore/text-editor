@@ -6,6 +6,6 @@ use std::io;
 use editor::Editor;
 
 fn main() -> io::Result<()> {
-    Editor::default().run()?;
+    Editor::new()?.run()?;
     Ok(())
 }

@@ -22,8 +22,8 @@ pub struct Position {
 
 impl Terminal {
     pub fn terminate() -> Result<()> {
-        Self::leave_alt_screen()?;
         disable_raw_mode()?;
+        Self::leave_alt_screen()?;
         Ok(())
     }
     pub fn initialize() -> Result<()> {
