@@ -19,7 +19,8 @@ impl Editor {
         std::panic::set_hook(Box::new(move |_| {
             Terminal::terminate().unwrap();
             let backtrace = backtrace::Backtrace::capture();
-            std::fs::write("panic_backtrace.txt", format!("{backtrace}\n")).unwrap();
+            // std::fs::write("panic_backtrace.txt", format!("{backtrace}\n")).unwrap();
+            println!("{backtrace}");
         }));
         Terminal::initialize()?;
         Ok(Self {

@@ -15,8 +15,8 @@ impl Buffer {
     pub fn len(&self) -> usize {
         self.lines.len()
     }
-    pub fn lines(&self) -> &[String] {
-        self.lines.as_slice()
+    pub fn lines(&self, offset: usize) -> &[String] {
+        &self.lines[offset..]
     }
     pub fn add(&mut self, s: String) {
         self.lines.push(s);

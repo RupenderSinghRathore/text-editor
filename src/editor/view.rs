@@ -2,7 +2,10 @@ use crate::editor::terminal::{Position, Size, Terminal};
 use buffer::Buffer;
 
 use crossterm::event::KeyCode;
-use std::io::Result;
+use std::{
+    cmp::{max, min},
+    io::Result,
+};
 
 mod buffer;
 
@@ -15,12 +18,19 @@ struct Location {
     y: usize,
 }
 
+#[derive(Debug, Clone, Copy, Default)]
+struct Offset {
+    x: usize,
+    y: usize,
+}
+
 #[derive(Default)]
 pub struct View {
     pub buffer: Buffer,
     needs_redraw: bool,
     size: Size,
     location: Location,
+    offset: Offset,
 }
 
 impl View {
@@ -30,6 +40,7 @@ impl View {
             needs_redraw: true,
             size: Terminal::size().unwrap_or_default(),
             location: Location::default(),
+            offset: Offset::default(),
         }
     }
     fn render_line(at: usize, line_text: &str) -> Result<()> {
@@ -47,10 +58,17 @@ impl View {
             return Ok(());
         }
 
-        let lines = self.buffer.lines();
+        let lines = self.buffer.lines(self.offset.y);
         for i in 0..height {
             if let Some(line) = lines.get(i) {
-                Self::render_line(i, line)?;
+                if self.offset.x == 0 {
+                    Self::render_line(i, line)?;
+                } else if line.len() > self.offset.x {
+                    let line = &line.clone()[self.offset.x..];
+                    Self::render_line(i, line)?;
+                } else {
+                    Self::render_line(i, "")?;
+                }
             } else if self.buffer.is_empty() && i == height / 3 {
                 Self::render_line(i, &Self::welcome_screen_msg(width))?;
             } else {
@@ -95,22 +113,34 @@ impl View {
         match code {
             KeyCode::Up => {
                 if y > 0 {
-                    y -= 1
+                    y -= 1;
+                } else {
+                    self.offset.y = max(self.offset.y.saturating_sub(1), 0);
+                    self.needs_redraw = true;
                 }
             }
             KeyCode::Down => {
-                if y < height {
+                if y < height - 1 {
                     y += 1;
+                } else {
+                    self.offset.y = min(self.offset.y + 1, self.buffer.len());
+                    self.needs_redraw = true;
                 }
             }
             KeyCode::Left => {
                 if x > 0 {
                     x -= 1;
+                } else {
+                    self.offset.x = max(self.offset.x.saturating_sub(1), 0);
+                    self.needs_redraw = true;
                 }
             }
             KeyCode::Right => {
-                if x < width {
+                if x < width - 1 {
                     x += 1;
+                } else {
+                    self.offset.x = self.offset.x.saturating_add(1);
+                    self.needs_redraw = true;
                 }
             }
             KeyCode::PageUp => {
