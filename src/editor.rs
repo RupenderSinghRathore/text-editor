@@ -1,6 +1,6 @@
 use std::{backtrace, env, io::Result};
 
-use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, read};
+use crossterm::event::{Event, KeyCode, KeyModifiers, read};
 
 use terminal::{Size, Terminal};
 use view::View;
@@ -44,13 +44,9 @@ impl Editor {
     }
     fn eval_event(&mut self, event: &Event) {
         match event {
-            Event::Key(KeyEvent {
-                code,
-                modifiers,
-                kind: KeyEventKind::Press,
-                ..
-            }) => match code {
-                KeyCode::Char('q') if *modifiers == KeyModifiers::CONTROL => {
+            // Event::Key enum field wraps a KeyEvent struct
+            Event::Key(event) => match event.code {
+                KeyCode::Char('c') if event.modifiers == KeyModifiers::CONTROL => {
                     self.should_quit = true;
                 }
                 KeyCode::Up
@@ -61,7 +57,7 @@ impl Editor {
                 | KeyCode::PageDown
                 | KeyCode::Home
                 | KeyCode::End => {
-                    self.view.move_caret(*code);
+                    self.view.move_caret(event.code);
                 }
                 _ => (),
             },
