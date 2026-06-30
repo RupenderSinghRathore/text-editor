@@ -6,8 +6,6 @@ use crossterm::{
     terminal::{self, Clear, ClearType, disable_raw_mode, enable_raw_mode, size},
 };
 
-pub struct Terminal;
-
 #[derive(Copy, Clone, Default)]
 pub struct Size {
     pub width: usize,
@@ -19,6 +17,8 @@ pub struct Position {
     pub col: usize,
     pub row: usize,
 }
+
+pub struct Terminal;
 
 impl Terminal {
     pub fn terminate() -> Result<()> {
@@ -40,9 +40,6 @@ impl Terminal {
     pub fn execute() -> Result<()> {
         stdout().flush()
     }
-    pub fn clear_screen() -> Result<()> {
-        Self::queue_command(Clear(ClearType::All))
-    }
     pub fn hide_caret() -> Result<()> {
         Self::queue_command(cursor::Hide)
     }
@@ -61,22 +58,9 @@ impl Terminal {
     fn as_u16(a: usize) -> u16 {
         u16::try_from(a).unwrap()
     }
-    pub fn move_caret_to_column(x: usize) -> Result<()> {
-        Self::queue_command(cursor::MoveToColumn(Self::as_u16(x)))
-    }
     pub fn move_caret_to(p: Position) -> Result<()> {
         Self::queue_command(cursor::MoveTo(Self::as_u16(p.col), Self::as_u16(p.row)))
     }
-    pub fn current_caret_position() -> Result<Position> {
-        let (col, row) = cursor::position()?;
-        Ok(Position {
-            col: col as usize,
-            row: row as usize,
-        })
-    }
-    // pub fn move_caret_to_row(y: usize) -> Result<()> {
-    //     Self::queue_command(cursor::MoveToRow(Self::as_u16(y)))
-    // }
     pub fn enter_alt_screen() -> Result<()> {
         Self::queue_command(terminal::EnterAlternateScreen)
     }

@@ -7,19 +7,11 @@ pub struct Buffer {
 }
 
 impl Buffer {
-    // pub fn default() -> Self {
-    //     Self {
-    //         lis: vec![(String::from("Hello World!"))],
-    //     }
-    // }
     pub fn len(&self) -> usize {
         self.lines.len()
     }
     pub fn lines(&self, offset: usize) -> &[String] {
         &self.lines[offset..]
-    }
-    pub fn add(&mut self, s: String) {
-        self.lines.push(s);
     }
     pub fn load(file: &str) -> Result<Self> {
         let content = fs::read_to_string(file)?;
