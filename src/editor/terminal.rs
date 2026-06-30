@@ -21,14 +21,14 @@ pub struct Position {
 pub struct Terminal;
 
 impl Terminal {
-    pub fn terminate() -> Result<()> {
-        disable_raw_mode()?;
-        Self::leave_alt_screen()?;
-        Ok(())
-    }
     pub fn initialize() -> Result<()> {
         enable_raw_mode()?;
         Self::enter_alt_screen()?;
+        Ok(())
+    }
+    pub fn terminate() -> Result<()> {
+        disable_raw_mode()?;
+        Self::leave_alt_screen()?;
         Ok(())
     }
     pub fn print(s: &str) -> Result<()> {
