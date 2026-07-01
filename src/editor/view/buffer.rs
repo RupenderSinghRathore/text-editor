@@ -10,8 +10,8 @@ impl Buffer {
     pub fn len(&self) -> usize {
         self.lines.len()
     }
-    pub fn lines(&self, offset: usize) -> &[String] {
-        &self.lines[offset..]
+    pub fn lines(&self) -> &[String] {
+        &self.lines
     }
     pub fn load(file: &str) -> Result<Self> {
         let content = fs::read_to_string(file)?;

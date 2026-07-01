@@ -12,12 +12,6 @@ pub struct Size {
     pub height: usize,
 }
 
-#[derive(Copy, Clone, Default)]
-pub struct Position {
-    pub col: usize,
-    pub row: usize,
-}
-
 pub struct Terminal;
 
 impl Terminal {
@@ -55,11 +49,8 @@ impl Terminal {
         let (width, height) = (width_u16 as usize, height_u16 as usize);
         Ok(Size { width, height })
     }
-    fn as_u16(a: usize) -> u16 {
-        u16::try_from(a).unwrap()
-    }
-    pub fn move_caret_to(p: Position) -> Result<()> {
-        Self::queue_command(cursor::MoveTo(Self::as_u16(p.col), Self::as_u16(p.row)))
+    pub fn move_caret_to(x: usize, y: usize) -> Result<()> {
+        Self::queue_command(cursor::MoveTo(x as u16, y as u16))
     }
     pub fn enter_alt_screen() -> Result<()> {
         Self::queue_command(terminal::EnterAlternateScreen)
