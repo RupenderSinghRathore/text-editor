@@ -103,7 +103,6 @@ impl View {
     }
     pub fn move_caret(&mut self, code: KeyCode) {
         let Location { mut x, mut y } = self.location;
-        let Size { width, height } = self.size;
         match code {
             KeyCode::Up => {
                 y = y.saturating_sub(1);
@@ -112,22 +111,34 @@ impl View {
                 y = y.saturating_add(1);
             }
             KeyCode::Left => {
-                x = x.saturating_sub(1);
+                if x == 0 && y != 0 {
+                    y = y.saturating_sub(1);
+                    x = usize::MAX;
+                } else if x != 0 {
+                    x = x.saturating_sub(1);
+                }
             }
             KeyCode::Right => {
-                x = x.saturating_add(1);
+                let max_x = self.buffer.lines().get(y).map_or(0, |line| line.len());
+                let max_y = self.buffer.len();
+                if x == max_x && y != max_y {
+                    y = y.saturating_add(1);
+                    x = 0;
+                } else if x != max_x {
+                    x = x.saturating_add(1);
+                }
             }
             KeyCode::PageUp => {
                 y = 0;
             }
             KeyCode::PageDown => {
-                y = height.saturating_sub(1);
+                y = usize::MAX;
             }
             KeyCode::Home => {
                 x = 0;
             }
             KeyCode::End => {
-                x = width.saturating_sub(1);
+                x = usize::MAX;
             }
             _ => (),
         }
