@@ -1,5 +1,6 @@
 use io::Result;
 use std::{fs, io};
+use unicode_segmentation::UnicodeSegmentation;
 
 #[derive(Default)]
 pub struct Buffer {
@@ -12,6 +13,9 @@ impl Buffer {
     }
     pub fn lines(&self) -> &[String] {
         &self.lines
+    }
+    pub fn grapheme_len(&self, x: usize) -> Option<usize> {
+        Some(self.lines.get(x)?.graphemes(true).count())
     }
     pub fn load(file: &str) -> Result<Self> {
         let content = fs::read_to_string(file)?;

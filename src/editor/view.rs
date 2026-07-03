@@ -1,11 +1,11 @@
-use crate::editor::terminal::{Size, Terminal};
+use crate::{
+    editor::terminal::{Size, Terminal},
+    logger::log,
+};
 use buffer::Buffer;
 
 use crossterm::event::KeyCode;
-use std::{
-    cmp::min,
-    io::{Result, Write},
-};
+use std::{cmp::min, io::Result};
 
 mod buffer;
 
@@ -175,14 +175,5 @@ impl View {
             offset_changed = true;
         }
         self.needs_redraw = offset_changed;
-    }
-    fn error_logging(log: String) {
-        let mut file = std::fs::OpenOptions::new()
-            .create(true)
-            .write(true)
-            .append(true)
-            .open("panic_backtrace.txt")
-            .unwrap();
-        file.write_all(log.as_bytes()).unwrap();
     }
 }

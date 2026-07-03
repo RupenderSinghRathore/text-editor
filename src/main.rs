@@ -1,6 +1,7 @@
 #![warn(clippy::all, clippy::pedantic)]
 
 mod editor;
+mod logger;
 use std::io;
 
 use editor::Editor;
