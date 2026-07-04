@@ -9,6 +9,7 @@ use crossterm::event::KeyCode;
 use std::{cmp::min, io::Result};
 
 mod buffer;
+mod document;
 
 const NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -178,55 +179,5 @@ impl View {
             offset_changed = true;
         }
         self.needs_redraw = offset_changed;
-    }
-    pub fn write_char(&mut self, c: char) {
-        let Location { mut x, y } = self.location;
-        let lines = self.buffer.mut_lines();
-
-        if y == lines.len() {
-            lines.push(c.to_string());
-        } else if let Some(line) = lines.get_mut(y) {
-            line.insert(x, c);
-        }
-        x = x.saturating_add(1);
-
-        self.location = Location { x, y };
-        self.needs_redraw = true;
-    }
-    pub fn handle_backspace(&mut self) {
-        let Location { mut x, mut y } = self.location;
-
-        if x == 0 {
-            if let Some(curr_line) = self.buffer.cloned_line(y)
-                && y > 0
-                && let Some(prev_line) = self.buffer.mut_line(y - 1)
-            {
-                x = prev_line.len();
-                prev_line.push_str(curr_line.as_ref());
-                self.buffer.mut_lines().remove(y);
-                y = y.saturating_sub(1);
-            }
-        } else if let Some(line) = self.buffer.mut_line(y) {
-            x = x.saturating_sub(1);
-            line.remove(x);
-        }
-
-        self.location = Location { x, y };
-        self.needs_redraw = true;
-    }
-    pub fn handle_enter(&mut self) {
-        let Location { mut x, mut y } = self.location;
-
-        if let Some(curr_line) = self.buffer.mut_line(y) {
-            y = y.saturating_add(1);
-
-            let new_line = curr_line.split_off(x);
-            self.buffer.mut_lines().insert(y, new_line);
-
-            x = 0; 
-        }
-
-        self.location = Location { x, y };
-        self.needs_redraw = true;
     }
 }
