@@ -59,6 +59,12 @@ impl Editor {
                 | KeyCode::End => {
                     self.view.move_caret(event.code);
                 }
+                KeyCode::Char(x) => {
+                    self.view.write_char(x);
+                }
+                KeyCode::Backspace => {
+                    self.view.handle_backspace()
+                }
                 _ => (),
             },
 

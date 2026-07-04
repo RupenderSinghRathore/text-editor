@@ -14,8 +14,14 @@ impl Buffer {
     pub fn lines(&self) -> &[String] {
         &self.lines
     }
+    pub fn mut_lines(&mut self) -> &mut Vec<String> {
+        &mut self.lines
+    }
     pub fn grapheme_len(&self, x: usize) -> Option<usize> {
         Some(self.lines.get(x)?.graphemes(true).count())
+    }
+    pub fn owned_line(&self, i: usize) -> Option<String> {
+        Some(self.lines.get(i)?.to_owned())
     }
     pub fn load(file: &str) -> Result<Self> {
         let content = fs::read_to_string(file)?;
