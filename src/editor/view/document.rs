@@ -11,6 +11,7 @@ impl View {
             KeyCode::Enter => self.handle_enter(),
             _ => self.location,
         };
+        self.unsaved_changes = true;
         self.needs_redraw = true;
     }
     fn write_char(&mut self, c: char) -> Location {

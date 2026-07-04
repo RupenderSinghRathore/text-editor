@@ -6,7 +6,7 @@ use crate::{
 use buffer::Buffer;
 
 use crossterm::event::KeyCode;
-use std::{cmp::min, io::Result};
+use std::{cmp::min, fmt::format, io::Result};
 
 mod buffer;
 mod document;
@@ -27,6 +27,8 @@ pub struct View {
     size: Size,
     location: Location,
     offset: Location,
+    unsaved_changes: bool,
+    filename: String,
 }
 
 impl View {
@@ -37,6 +39,8 @@ impl View {
             size: Terminal::size().unwrap_or_default(),
             location: Location::default(),
             offset: Location::default(),
+            unsaved_changes: false,
+            filename: String::default(),
         }
     }
     pub fn refresh_screen(&mut self) -> Result<()> {
@@ -64,7 +68,7 @@ impl View {
 
         let top = self.offset.y;
         let lines = self.buffer.lines();
-        for i in 0..height {
+        for i in 0..height-1 {
             if let Some(line) = lines.get(i.saturating_add(top)) {
                 let left = self.offset.x;
 
@@ -79,6 +83,7 @@ impl View {
                 Self::render_line(i, "~")?;
             }
         }
+        Self::render_line(height.saturating_sub(1), &self.statusline());
 
         self.needs_redraw = false;
         Ok(())
@@ -89,6 +94,13 @@ impl View {
         Terminal::print(line_text)?;
         Ok(())
     }
+    fn statusline(&self) -> String {
+        let mut msg = format!("\"{}\" {}L", &self.filename, self.buffer.len());
+        if self.unsaved_changes {
+            msg.push_str(", unsaved");
+        }
+        msg
+    }
     fn welcome_screen_msg(width: usize) -> String {
         let msg = format!("{NAME} - {VERSION}");
         let spaces_needed = " ".repeat((width - msg.len()) / 2);
@@ -98,8 +110,9 @@ impl View {
         self.size = size;
         self.needs_redraw = true;
     }
-    pub fn load(&mut self, file: &str) {
-        if let Ok(buf) = Buffer::load(file) {
+    pub fn load(&mut self, filename: &str) {
+        self.filename = filename.to_string();
+        if let Ok(buf) = Buffer::load(filename) {
             self.buffer = buf;
         }
     }
