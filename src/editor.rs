@@ -62,9 +62,8 @@ impl Editor {
                 KeyCode::Char(x) => {
                     self.view.write_char(x);
                 }
-                KeyCode::Backspace => {
-                    self.view.handle_backspace()
-                }
+                KeyCode::Backspace => self.view.handle_backspace(),
+                KeyCode::Enter => self.view.handle_enter(),
                 _ => (),
             },
 

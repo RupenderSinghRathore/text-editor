@@ -1,3 +1,4 @@
+#![allow(unused)]
 use crate::{
     editor::terminal::{Size, Terminal},
     logger::log,
@@ -151,7 +152,7 @@ impl View {
         self.scroll_location_into_view();
     }
     fn get_max_x(&self, y: usize) -> usize {
-        self.buffer.lines().get(y).map_or(0, |line| line.len())
+        self.buffer.line(y).map_or(0, |line| line.len())
     }
     fn get_max_y(&self) -> usize {
         self.buffer.len().saturating_sub(1)
@@ -196,18 +197,33 @@ impl View {
         let Location { mut x, mut y } = self.location;
 
         if x == 0 {
-            if let Some(curr_line) = self.buffer.owned_line(y)
+            if let Some(curr_line) = self.buffer.cloned_line(y)
                 && y > 0
-                && let Some(prev_line) = self.buffer.mut_lines().get_mut(y - 1)
+                && let Some(prev_line) = self.buffer.mut_line(y - 1)
             {
                 x = prev_line.len();
                 prev_line.push_str(curr_line.as_ref());
                 self.buffer.mut_lines().remove(y);
                 y = y.saturating_sub(1);
             }
-        } else if let Some(line) = self.buffer.mut_lines().get_mut(y) {
+        } else if let Some(line) = self.buffer.mut_line(y) {
             x = x.saturating_sub(1);
             line.remove(x);
+        }
+
+        self.location = Location { x, y };
+        self.needs_redraw = true;
+    }
+    pub fn handle_enter(&mut self) {
+        let Location { mut x, mut y } = self.location;
+
+        if let Some(curr_line) = self.buffer.mut_line(y) {
+            y = y.saturating_add(1);
+
+            let new_line = curr_line.split_off(x);
+            self.buffer.mut_lines().insert(y, new_line);
+
+            x = 0; 
         }
 
         self.location = Location { x, y };
