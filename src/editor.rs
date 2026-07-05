@@ -5,6 +5,8 @@ use crossterm::event::{Event, KeyCode, KeyModifiers, read};
 use terminal::{Size, Terminal};
 use view::View;
 
+use crate::logger::log;
+
 mod terminal;
 mod view;
 
@@ -19,8 +21,7 @@ impl Editor {
         std::panic::set_hook(Box::new(move |_| {
             Terminal::terminate().unwrap();
             let backtrace = backtrace::Backtrace::capture();
-            // std::fs::write("panic_backtrace.txt", format!("{backtrace}\n")).unwrap();
-            println!("{backtrace}");
+            log(backtrace);
         }));
         Terminal::initialize()?;
         Ok(Self {
@@ -48,6 +49,9 @@ impl Editor {
             Event::Key(event) => match event.code {
                 KeyCode::Char('c') if event.modifiers == KeyModifiers::CONTROL => {
                     self.should_quit = true;
+                }
+                KeyCode::Char('s') if event.modifiers == KeyModifiers::CONTROL => {
+                    self.view.save_file();
                 }
                 KeyCode::Up
                 | KeyCode::Down

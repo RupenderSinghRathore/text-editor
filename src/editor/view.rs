@@ -1,15 +1,12 @@
-#![allow(unused)]
-use crate::{
-    editor::terminal::{Size, Terminal},
-    logger::log,
-};
+use crate::editor::terminal::{Size, Terminal};
 use buffer::Buffer;
 
 use crossterm::event::KeyCode;
-use std::{cmp::min, fmt::format, io::Result};
+use std::{cmp::min, io::Result};
 
 mod buffer;
-mod document;
+mod editing;
+mod file;
 
 const NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -68,7 +65,7 @@ impl View {
 
         let top = self.offset.y;
         let lines = self.buffer.lines();
-        for i in 0..height-1 {
+        for i in 0..height - 1 {
             if let Some(line) = lines.get(i.saturating_add(top)) {
                 let left = self.offset.x;
 
@@ -83,7 +80,7 @@ impl View {
                 Self::render_line(i, "~")?;
             }
         }
-        Self::render_line(height.saturating_sub(1), &self.statusline());
+        Self::render_line(height.saturating_sub(1), &self.statusline())?;
 
         self.needs_redraw = false;
         Ok(())

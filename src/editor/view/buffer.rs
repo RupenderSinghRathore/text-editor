@@ -1,5 +1,8 @@
 use io::Result;
-use std::{fs, io};
+use std::{
+    fs,
+    io::{self, Write},
+};
 use unicode_segmentation::UnicodeSegmentation;
 
 #[derive(Default)]
@@ -40,5 +43,13 @@ impl Buffer {
     }
     pub fn is_empty(&self) -> bool {
         self.lines.is_empty()
+    }
+    pub fn content(&self) -> Vec<u8> {
+        let mut buf = Vec::new();
+        for s in self.lines() {
+            buf.write_all(s.as_bytes()).unwrap();
+            buf.push(b'\n');
+        }
+        buf
     }
 }
