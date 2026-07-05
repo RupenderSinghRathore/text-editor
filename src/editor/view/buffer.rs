@@ -3,7 +3,6 @@ use std::{
     fs,
     io::{self, Write},
 };
-use unicode_segmentation::UnicodeSegmentation;
 
 #[derive(Default)]
 pub struct Buffer {
@@ -26,13 +25,10 @@ impl Buffer {
     pub fn mut_line(&mut self, i: usize) -> Option<&mut String> {
         self.lines.get_mut(i)
     }
-    pub fn grapheme_len(&self, x: usize) -> Option<usize> {
-        Some(self.lines.get(x)?.graphemes(true).count())
-    }
     pub fn cloned_line(&self, i: usize) -> Option<String> {
         Some(self.lines.get(i)?.to_owned())
     }
-    pub fn load(file: &str) -> Result<Self> {
+    pub fn load_file(file: &str) -> Result<Self> {
         let content = fs::read_to_string(file)?;
 
         let mut lines: Vec<String> = vec![];
@@ -40,6 +36,10 @@ impl Buffer {
             lines.push(line.to_string());
         }
         Ok(Self { lines })
+    }
+    pub fn load_empty() -> Self {
+        let lines: Vec<String> = vec![];
+        Self { lines }
     }
     pub fn is_empty(&self) -> bool {
         self.lines.is_empty()

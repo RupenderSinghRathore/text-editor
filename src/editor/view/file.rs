@@ -1,12 +1,25 @@
-use crate::logger::log;
+use crate::{editor::view::buffer::Buffer, logger::log};
 use std::{
     fs::OpenOptions,
-    io::{BufWriter, Write},
+    io::{BufWriter, ErrorKind, Write},
 };
 
 use crate::editor::view::View;
 
 impl View {
+    pub fn load_file(&mut self, filename: &str) {
+        self.filename = filename.to_string();
+        self.buffer = match Buffer::load_file(filename) {
+            Ok(buf) => buf,
+            Err(e) => match e.kind() {
+                ErrorKind::NotFound => {
+                    self.unsaved_changes = true;
+                    Buffer::load_empty()
+                }
+                _ => panic!("{e}"),
+            },
+        };
+    }
     pub fn save_file(&mut self) {
         if !self.unsaved_changes {
             return;

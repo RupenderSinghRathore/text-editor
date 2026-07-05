@@ -107,12 +107,6 @@ impl View {
         self.size = size;
         self.needs_redraw = true;
     }
-    pub fn load(&mut self, filename: &str) {
-        self.filename = filename.to_string();
-        if let Ok(buf) = Buffer::load(filename) {
-            self.buffer = buf;
-        }
-    }
     pub fn move_caret(&mut self, code: KeyCode) {
         let Location { mut x, mut y } = self.location;
         match code {

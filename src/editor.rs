@@ -32,7 +32,7 @@ impl Editor {
     pub fn run(&mut self) -> Result<()> {
         let args: Vec<String> = env::args().collect();
         if let Some(arg) = args.get(1) {
-            self.view.load(arg);
+            self.view.load_file(arg);
         }
         while !self.should_quit {
             self.view.refresh_screen()?;

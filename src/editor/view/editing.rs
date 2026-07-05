@@ -1,10 +1,9 @@
 use crossterm::event::KeyCode;
 
-use crate::editor::view::{self, Location, View};
+use crate::editor::view::{Location, View};
 
 impl View {
     pub fn edit_document(&mut self, key: KeyCode) {
-        let lines = self.buffer.mut_lines();
         self.location = match key {
             KeyCode::Char(c) => self.write_char(c),
             KeyCode::Backspace => self.handle_backspace(),
