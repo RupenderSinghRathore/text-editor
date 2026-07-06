@@ -1,4 +1,7 @@
+use crate::editor::view::string::Utf8;
 use crossterm::event::KeyCode;
+use unicode_segmentation::UnicodeSegmentation;
+use unicode_width::UnicodeWidthChar;
 
 use crate::editor::view::{Location, View};
 
@@ -17,12 +20,10 @@ impl View {
         let Location { mut x, y } = self.location;
         let lines = self.buffer.mut_lines();
 
-        if y == lines.len() {
-            lines.push(c.to_string());
-        } else if let Some(line) = lines.get_mut(y) {
-            line.insert(x, c);
+        if let Some(line) = lines.get_mut(y) {
+            Self::insert_grapheme_at_display_width(line, c, x);
+            x = x.saturating_add(c.width().unwrap_or(0));
         }
-        x = x.saturating_add(1);
 
         Location { x, y }
     }
@@ -34,14 +35,16 @@ impl View {
                 && y > 0
                 && let Some(prev_line) = self.buffer.mut_line(y - 1)
             {
-                x = prev_line.len();
+                x = prev_line.display_width();
                 prev_line.push_str(curr_line.as_ref());
                 self.buffer.mut_lines().remove(y);
                 y = y.saturating_sub(1);
             }
         } else if let Some(line) = self.buffer.mut_line(y) {
-            x = x.saturating_sub(1);
-            line.remove(x);
+            let prev_grapheme_index = line.grapheme_index_from_width(x).saturating_sub(1);
+            let step = line.display_step_from_grapheme_index(prev_grapheme_index);
+            x = x.saturating_sub(step);
+            Self::remove_grapheme(line, prev_grapheme_index);
         }
 
         Location { x, y }
@@ -59,5 +62,23 @@ impl View {
         }
 
         Location { x, y }
+    }
+    fn remove_grapheme(s: &mut String, i: usize) {
+        let mut iter = s.grapheme_indices(true);
+        let start = match iter.nth(i) {
+            Some((start, _)) => start,
+            None => return,
+        };
+        let end = iter.next().map_or(s.len(), |(end, _)| end);
+        s.replace_range(start..end, "")
+    }
+    fn insert_grapheme_at_display_width(s: &mut String, ch: char, w: usize) {
+        let grapheme_idx = s.grapheme_index_from_width(w);
+        let mut iter = s.grapheme_indices(true);
+        let offset_idx = match iter.nth(grapheme_idx) {
+            Some((start, _)) => start,
+            None => return,
+        };
+        s.insert(offset_idx, ch);
     }
 }

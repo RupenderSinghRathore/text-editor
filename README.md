@@ -23,9 +23,12 @@ src
 ├── editor
 │   ├── terminal.rs
 │   ├── view
-│   │   └── buffer.rs
+│   │   ├── buffer.rs
+│   │   ├── editing.rs
+│   │   └── file.rs
 │   └── view.rs
 ├── editor.rs
+├── logger.rs
 └── main.rs
 ```
 
@@ -34,12 +37,18 @@ src
 ```tree
 editor
 ├── terminal
-└── view
-    └── buffer
+├── view
+│   ├── buffer.rs
+│   ├── editing.rs
+│   └── file.rs
+└── view.rs
+
 ```
 
 - **main.rs** is just startup glue.
 - **editor.rs** owns the app loop and input handling.
 - **terminal.rs** wraps crossterm.
 - **view.rs** renders the screen.
+- **editing.rs** edits the buffer/file.
 - **buffer.rs** holds file contents.
+- **file.rs** load and save files.

@@ -7,6 +7,9 @@ use std::{cmp::min, io::Result};
 mod buffer;
 mod editing;
 mod file;
+mod string;
+
+use string::Utf8;
 
 const NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -44,10 +47,9 @@ impl View {
         Terminal::hide_caret()?;
 
         self.render()?;
-
         Terminal::move_caret_to(
-            self.location.x - self.offset.x,
-            self.location.y - self.offset.y,
+            self.location.x.saturating_sub(self.offset.x),
+            self.location.y.saturating_sub(self.offset.y),
         )?;
 
         Terminal::show_caret()?;
@@ -69,9 +71,8 @@ impl View {
             if let Some(line) = lines.get(i.saturating_add(top)) {
                 let left = self.offset.x;
 
-                // when scrolling right end will have the entire width + offset or the len of string
-                let right = min(self.offset.x.saturating_add(width), line.len());
-                let line = &line.get(left..right).unwrap_or_default();
+                let right = min(self.offset.x.saturating_add(width), line.display_width());
+                let line = &line.get_str_for_width(left, right);
 
                 Self::render_line(i, line)?;
             } else if self.buffer.is_empty() && i == height / 3 {
@@ -121,7 +122,10 @@ impl View {
                     y = y.saturating_sub(1);
                     x = usize::MAX;
                 } else if x != 0 {
-                    x = x.saturating_sub(1);
+                    let line = self.buffer.line(y).unwrap();
+                    let grapheme_index = line.grapheme_index_from_width(x);
+                    let step = line.display_step_from_grapheme_index(grapheme_index);
+                    x = x.saturating_sub(step);
                 }
             }
             KeyCode::Right => {
@@ -131,7 +135,10 @@ impl View {
                     y = y.saturating_add(1);
                     x = 0;
                 } else if x != max_x {
-                    x = x.saturating_add(1);
+                    let line = self.buffer.line(y).unwrap();
+                    let grapheme_index = line.grapheme_index_from_width(x);
+                    let step = line.display_step_from_grapheme_index(grapheme_index);
+                    x = x.saturating_add(step);
                 }
             }
             KeyCode::PageUp => {
@@ -157,7 +164,7 @@ impl View {
         self.scroll_location_into_view();
     }
     fn get_max_x(&self, y: usize) -> usize {
-        self.buffer.line(y).map_or(0, |line| line.len())
+        self.buffer.line(y).map_or(0, |line| line.display_width())
     }
     fn get_max_y(&self) -> usize {
         self.buffer.len().saturating_sub(1)
