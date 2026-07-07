@@ -13,6 +13,7 @@ impl View {
             KeyCode::Enter => self.handle_enter(),
             _ => self.location,
         };
+        self.scroll_location_into_view();
         self.unsaved_changes = true;
         self.needs_redraw = true;
     }
@@ -55,7 +56,12 @@ impl View {
         if let Some(curr_line) = self.buffer.mut_line(y) {
             y = y.saturating_add(1);
 
-            let new_line = curr_line.split_off(x);
+            let offset_index = curr_line.offset_index_from_width(x);
+            let new_line = if offset_index != curr_line.len() {
+                curr_line.split_off(offset_index)
+            } else {
+                String::new()
+            };
             self.buffer.mut_lines().insert(y, new_line);
 
             x = 0;
@@ -77,7 +83,14 @@ impl View {
         let mut iter = s.grapheme_indices(true);
         let offset_idx = match iter.nth(grapheme_idx) {
             Some((start, _)) => start,
-            None => return,
+            None => {
+                if grapheme_idx == 0 {
+                    0
+                } else {
+                    s.push(ch);
+                    return;
+                }
+            }
         };
         s.insert(offset_idx, ch);
     }
